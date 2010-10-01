@@ -7,8 +7,8 @@ require 'json'
 class RawUploadTest < Test::Unit::TestCase
   include Rack::Test::Methods
 
-  EXAMPLE_CONTENT_TYPE = 'application/foo'
-  EXAMPLE_FIELD_NAME = 'foo[file]'
+  EXAMPLE_CONTENT_TYPE = 'application/example'
+  EXAMPLE_FIELD_NAME = 'example-field-name'
   EXAMPLE_FILE_NAME = __FILE__
 
   def app
@@ -37,10 +37,15 @@ class RawUploadTest < Test::Unit::TestCase
   end
 
   def actual_file
-    actual_fields[EXAMPLE_FIELD_NAME]
+    @actual_file || actual_fields[EXAMPLE_FIELD_NAME]
   end
 
   context "raw file upload" do
+    should "kick in when X-Raw-Upload is set to 'true'" do
+      upload!
+      assert actual_file
+    end
+
     should "not kick in when X-Raw-Upload is not set" do
       upload! 'HTTP_X_RAW_UPLOAD' => nil
       assert_successful_non_upload
@@ -49,11 +54,6 @@ class RawUploadTest < Test::Unit::TestCase
     should "not kick in when X-Raw-Upload is set to 'false'" do
       upload! 'HTTP_X_RAW_UPLOAD' => 'false'
       assert_successful_non_upload
-    end
-
-    should "kick in when X-Raw-Upload is set to 'true'" do
-      upload!
-      assert_upload
     end
 
     should "convert into simulated form upload" do
@@ -68,15 +68,16 @@ class RawUploadTest < Test::Unit::TestCase
       assert_equal "1 2 3", actual_fields['bar']
       assert_successful_upload
     end
+
+    should "understand nested field names" do
+      upload! 'HTTP_X_RAW_UPLOAD_FIELD_NAME' => 'foo[bar][baz]'
+      @actual_file = actual_fields['foo']['bar']['baz']
+      assert_successful_upload
+    end
   end
   
-  def assert_upload
-    assert last_request.POST.has_key?(EXAMPLE_FIELD_NAME)
-  end
-
   def assert_successful_upload
     assert last_response.ok?
-    assert_upload
     assert actual_file.is_a? Hash
     
     expected_content = File.read(EXAMPLE_FILE_NAME)

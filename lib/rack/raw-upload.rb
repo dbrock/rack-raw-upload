@@ -1,4 +1,5 @@
 require 'json'
+require 'rack/utils'
 
 module Rack
   class RawUpload
@@ -32,7 +33,10 @@ module Rack
 
       def form_hash
         result = other_params
-        result[field_name] = file_hash
+
+        # Handle stuff like the field name being foo[bar][baz].
+        Rack::Utils.normalize_params(result, field_name, file_hash)
+
         result
       end
 
