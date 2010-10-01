@@ -1,106 +1,94 @@
 require 'rubygems'
 require 'rack/test'
 require 'shoulda'
-require 'rack/raw_upload'
+require 'rack/raw-upload'
 require 'json'
 
 class RawUploadTest < Test::Unit::TestCase
   include Rack::Test::Methods
 
+  EXAMPLE_CONTENT_TYPE = 'application/foo'
+  EXAMPLE_FIELD_NAME = 'foo[file]'
+  EXAMPLE_FILE_NAME = __FILE__
+
   def app
     Rack::Builder.new do
       use Rack::RawUpload
-      run Proc.new { |env| [200, {'Content-Type' => 'text/html'}, ['success']] }
+      run Proc.new { [200, { 'Content-Type' => 'text/plain' }, ''] }
     end
   end
 
-  def setup
-    @path = __FILE__
-    @filename = File.basename(@path)
-    @file = File.open(@path)
-  end
-
-  def upload(env = {})
+  def upload!(env = {})
     env = {
       'REQUEST_METHOD' => 'POST',
-      'CONTENT_TYPE' => 'application/octet-stream',
-      'PATH_INFO' => '/some/path',
-      'rack.input' => @file,
+      'CONTENT_TYPE' => EXAMPLE_CONTENT_TYPE,
+      'HTTP_X_RAW_UPLOAD' => 'true',
+      'HTTP_X_RAW_UPLOAD_FIELD_NAME' => EXAMPLE_FIELD_NAME,
+      'HTTP_X_RAW_UPLOAD_FILE_NAME' => EXAMPLE_FILE_NAME,
+      'PATH_INFO' => '/',
+      'rack.input' => File.open(EXAMPLE_FILE_NAME),
     }.merge(env)
+
     request(env['PATH_INFO'], env)
   end
 
+  def actual_fields
+    last_request.POST
+  end
+
+  def actual_file
+    actual_fields[EXAMPLE_FIELD_NAME]
+  end
+
   context "raw file upload" do
-    context "" do
-      setup do
-        upload
-      end
-
-      should "be transformed into a normal form upload" do
-        file = File.open(@path)
-        received = last_request.POST["file"]
-        assert_equal received[:tempfile].gets, file.gets
-        assert_equal received[:type], "application/octet-stream"
-      end
-
-      should "succeed" do
-        assert last_response.ok?
-      end
+    should "not kick in when X-Raw-Upload is not set" do
+      upload! 'HTTP_X_RAW_UPLOAD' => nil
+      assert_successful_non_upload
     end
 
-    context "with query parameters" do
-      setup do
-        upload('HTTP_X_QUERY_PARAMS' => JSON.generate({
-          :argument => 'value1',
-          'argument with spaces' => 'value 2'
-        }))
-      end
-
-      should "convert these into arguments" do
-        assert_equal last_request.POST['argument'], 'value1'
-        assert_equal last_request.POST['argument with spaces'], 'value 2'
-      end
+    should "not kick in when X-Raw-Upload is set to 'false'" do
+      upload! 'HTTP_X_RAW_UPLOAD' => 'false'
+      assert_successful_non_upload
     end
 
-    context "with filename" do
-      setup do
-        upload('HTTP_X_FILE_NAME' => @filename)
-      end
+    should "kick in when X-Raw-Upload is set to 'true'" do
+      upload!
+      assert_upload
+    end
 
-      should "be transformed into a normal form upload" do
-        assert_equal @filename, last_request.POST["file"][:filename]
-      end
+    should "convert into simulated form upload" do
+      upload!
+      assert_successful_upload
+    end
+
+    should "pass along additional parameters" do
+      json = JSON.generate :foo => [1, 2, 3], :bar => '1 2 3'
+      upload! 'HTTP_X_RAW_UPLOAD_OTHER_PARAMS_JSON' => json
+      assert_equal [1, 2, 3], actual_fields['foo']
+      assert_equal "1 2 3", actual_fields['bar']
+      assert_successful_upload
     end
   end
   
-  context "path matcher" do
-    should "accept any path by default" do
-      rru = Rack::RawUpload.new(nil)
-      assert rru.upload_path?('/')
-      assert rru.upload_path?('/resources.json')
-      assert rru.upload_path?('/resources/stuff.json')
-    end
+  def assert_upload
+    assert last_request.POST.has_key?(EXAMPLE_FIELD_NAME)
+  end
 
-    should "accept literal paths" do
-      rru = Rack::RawUpload.new nil, :paths => '/resources.json'
-      assert rru.upload_path?('/resources.json')
-      assert ! rru.upload_path?('/resources.html')
-    end
-
-    should "accept paths with wildcards" do
-      rru = Rack::RawUpload.new nil, :paths => '/resources.*'
-      assert rru.upload_path?('/resources.json')
-      assert rru.upload_path?('/resources.*')
-      assert ! rru.upload_path?('/resource.json')
-      assert ! rru.upload_path?('/resourcess.json')
-      assert ! rru.upload_path?('/resources.json/blah')
-    end
+  def assert_successful_upload
+    assert last_response.ok?
+    assert_upload
+    assert actual_file.is_a? Hash
     
-    should "accept several entries" do
-      rru = Rack::RawUpload.new nil, :paths => ['/resources.*', '/uploads']
-      assert rru.upload_path?('/uploads')
-      assert rru.upload_path?('/resources.*')
-      assert ! rru.upload_path?('/upload')
-    end
+    expected_content = File.read(EXAMPLE_FILE_NAME)
+    actual_content = actual_file[:tempfile].read
+      
+    assert_equal expected_content, actual_content
+    assert_equal EXAMPLE_CONTENT_TYPE, actual_file[:type]
+    assert_equal EXAMPLE_FILE_NAME, actual_file[:filename]
+  end
+
+  def assert_successful_non_upload
+    assert last_response.ok?
+    assert !last_request.POST.has_key?(EXAMPLE_FIELD_NAME)
   end
 end
