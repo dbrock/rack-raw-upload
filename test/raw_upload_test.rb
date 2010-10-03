@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'rack/test'
 require 'shoulda'
-require 'rack/raw-upload'
+require 'rack-raw-upload'
 require 'json'
 
 class RawUploadTest < Test::Unit::TestCase
@@ -13,7 +13,7 @@ class RawUploadTest < Test::Unit::TestCase
 
   def app
     Rack::Builder.new do
-      use Rack::RawUpload
+      use RackRawUpload
       run Proc.new { [200, { 'Content-Type' => 'text/plain' }, ''] }
     end
   end
