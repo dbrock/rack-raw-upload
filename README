@@ -9,15 +9,15 @@ convenient when using, e.g., Rails with Paperclip.
 
 Basically, your request should look like this:
 
-  POST /article/123/comments HTTP/1.1
-  X-Raw-Upload: true
-  X-Raw-Upload-Field-Name: comment[attachment]
-  X-Raw-Upload-File-Name: Example.txt
-  X-Raw-Upload-Other-Params-JSON: { "comment": { "title": "Example" } }
-  Content-Type: text/plain
-  Content-Length: 42
-  
-  This would be the contents of Example.txt.
+  | POST /article/123/comments HTTP/1.1
+  | X-Raw-Upload: true
+  | X-Raw-Upload-Field-Name: comment[attachment]
+  | X-Raw-Upload-File-Name: Example.txt
+  | X-Raw-Upload-Other-Params-JSON: { "comment": { "title": "Example" } }
+  | Content-Type: text/plain
+  | Content-Length: 42
+  | 
+  | This would be the contents of Example.txt.
 
 When using Rails, this middleware has to be inserted rather early in
 the stack (because otherwise Rails will choke on raw uploads):
