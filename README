@@ -22,5 +22,9 @@ Basically, your request should look like this:
 When using Rails, this middleware has to be inserted rather early in
 the stack (because otherwise Rails will choke on raw uploads):
 
-  Acme::Application.config.middleware.
-    insert_before ActionDispatch::Static, RackRawUpload
+  | require 'rack/raw-upload'
+  | 
+  | Acme::Application.config.middleware.
+  |   insert_before ActionDispatch::Static, Rack::RawUpload
+
+Put that in a file called, e.g., config/initializers/middleware.rb.

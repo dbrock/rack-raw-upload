@@ -1,8 +1,8 @@
-require 'rack-raw-upload'
+require 'rack/raw-upload'
 require 'rack/test'
 require 'json'
 
-describe RackRawUpload do
+describe Rack::RawUpload do
   include Rack::Test::Methods
 
   it "should convert raw upload into simulated form upload" do
@@ -74,7 +74,7 @@ describe RackRawUpload do
 
   def app
     Rack::Builder.new do
-      use RackRawUpload
+      use Rack::RawUpload
       run lambda { [200, { 'Content-Type' => 'text/plain' }, ''] }
     end
   end

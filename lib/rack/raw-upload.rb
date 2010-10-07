@@ -1,7 +1,7 @@
 require 'json'
 require 'rack/utils'
 
-class RackRawUpload
+class Rack::RawUpload
   def initialize(app)
     @app = app
   end
