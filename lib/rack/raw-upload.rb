@@ -28,29 +28,31 @@ class Rack::RawUpload
     end
     
     def form_hash
-      result = other_params
+      result = other_fields
 
-      # Handle stuff like the field name being foo[bar][baz].
-      Rack::Utils.normalize_params(result, field_name, file_hash)
+      if result.is_a? Hash
+        # Handle stuff like the field name being foo[bar][baz].
+        Rack::Utils.normalize_params(result, field_name, file_hash)
 
-      result
-    end
-
-    def other_params
-      if other_params_json
-        result = JSON.parse(other_params_json)
-        if result.is_a? Hash
-          result
-        else
-          raise "Value of X-Raw-Upload-Other-Params-JSON must be a hash."
-        end
+        result
       else
-        {}
+        raise "Value of X-Raw-Upload-Other-Fields must be a hash."
       end
     end
 
-    def other_params_json
-      @env['HTTP_X_RAW_UPLOAD_OTHER_PARAMS_JSON']
+    def other_fields
+      case other_fields_string
+      when nil
+        {}
+      when /^application\/json,(.*)/
+        JSON.parse($1)
+      else
+        raise "Type of X-Raw-Upload-Other-Fields must be application/json."
+      end
+    end
+
+    def other_fields_string
+      @env['HTTP_X_RAW_UPLOAD_OTHER_FIELDS']
     end
 
     def file_hash

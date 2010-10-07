@@ -17,7 +17,7 @@ describe Rack::RawUpload do
 
   it "should pass along additional parameters" do
     json = JSON.generate(:foo => [1, 2, 3], :bar => '1 2 3')
-    upload! 'HTTP_X_RAW_UPLOAD_OTHER_PARAMS_JSON' => json
+    upload! 'HTTP_X_RAW_UPLOAD_OTHER_FIELDS' => "application/json,#{json}"
     upload_should_have_been_converted
     last_request.POST['foo'].should == [1, 2, 3]
     last_request.POST['bar'].should == "1 2 3"
