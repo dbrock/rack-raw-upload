@@ -75,7 +75,10 @@ class Rack::RawUpload
 
     def tempfile
       result = Tempfile.new('raw-upload.')
+
+      # Fixes encoding problem with Ruby 1.9.
       result = open(result.path, "r+:BINARY")
+
       result << input.read
       result.flush
       result.rewind
