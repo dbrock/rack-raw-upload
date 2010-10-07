@@ -16,7 +16,7 @@ class Rack::RawUpload
     end
 
     def run
-      convert! if @env['HTTP_X_RAW_UPLOAD'] == 'true'
+      convert! unless field_name == nil
       @app.call(@env)
     end
 

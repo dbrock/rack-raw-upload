@@ -10,13 +10,8 @@ describe Rack::RawUpload do
     upload_should_have_been_converted
   end
 
-  it "should not kick in when X-Raw-Upload is not set" do
-    upload! 'HTTP_X_RAW_UPLOAD' => nil
-    upload_should_not_have_been_converted
-  end
-
-  it "should not kick in when X-Raw-Upload is set to 'false'" do
-    upload! 'HTTP_X_RAW_UPLOAD' => 'false'
+  it "should not kick in when X-Raw-Upload-Field-Name is not set" do
+    upload! 'HTTP_X_RAW_UPLOAD_FIELD_NAME' => nil
     upload_should_not_have_been_converted
   end
 
@@ -45,7 +40,6 @@ describe Rack::RawUpload do
   def default_env
     {
       'CONTENT_TYPE' => EXAMPLE_CONTENT_TYPE,
-      'HTTP_X_RAW_UPLOAD' => 'true',
       'HTTP_X_RAW_UPLOAD_FIELD_NAME' => EXAMPLE_FIELD_NAME,
       'HTTP_X_RAW_UPLOAD_FILE_NAME' => EXAMPLE_FILE_NAME,
       'rack.input' => File.open(EXAMPLE_FILE_NAME)
