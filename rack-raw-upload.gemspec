@@ -9,5 +9,5 @@ Gem::Specification.new do |gem|
   gem.add_dependency 'rack'
   gem.add_dependency 'json'
   gem.add_development_dependency 'rack-test'
-  gem.add_development_dependency 'shoulda'
+  gem.add_development_dependency 'rspec'
 end
