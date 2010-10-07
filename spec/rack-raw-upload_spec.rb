@@ -45,17 +45,17 @@ describe Rack::RawUpload do
       'rack.input' => File.open(EXAMPLE_FILE_NAME)
     }
   end
-  
+
   def upload_should_have_been_converted(options = {})
     actual_file = options[:actual_file] ||
       last_request.POST[EXAMPLE_FIELD_NAME]
 
     last_response.should be_ok
     actual_file.should be_a(Hash)
-    
+
     expected_content = File.read(EXAMPLE_FILE_NAME)
     actual_content = actual_file[:tempfile].read
-      
+
     actual_content.should == expected_content
     actual_file[:type].should == EXAMPLE_CONTENT_TYPE
     actual_file[:filename].should == EXAMPLE_FILE_NAME

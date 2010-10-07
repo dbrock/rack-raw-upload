@@ -10,7 +10,7 @@ class Rack::RawUpload
     Instance.new(@app, env).run
   end
 
-  class Instance 
+  class Instance
     def initialize(app, env)
       @app, @env = app, env
     end
