@@ -22,6 +22,8 @@ class Rack::RawUpload
 
     def convert!
       @env['rack.request.form_hash'] = form_hash
+
+      # Signal to Rack that the input has already been parsed.
       @env['rack.request.form_input'] = @env['rack.input']
     end
     
