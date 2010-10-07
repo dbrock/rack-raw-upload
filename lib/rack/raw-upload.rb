@@ -74,10 +74,16 @@ class Rack::RawUpload
       # Fixes encoding problem with Ruby 1.9.
       result = open(result.path, "r+:BINARY")
 
-      result << input.read
+      result << input
       result.flush
       result.rewind
       result
+    end
+
+    def input
+      @env['rack.input'].read
+    ensure
+      @env['rack.input'].rewind
     end
   end
 end
