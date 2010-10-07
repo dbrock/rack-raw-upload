@@ -7,11 +7,7 @@ class Rack::RawUpload
   end
 
   def call(env)
-    if env['HTTP_X_RAW_UPLOAD'] == 'true'
-      Instance.new(@app, env).run
-    else
-      @app.call(env)
-    end
+    Instance.new(@app, env).run
   end
 
   class Instance 
@@ -20,16 +16,15 @@ class Rack::RawUpload
     end
 
     def run
-      @env['rack.request.form_input'] = input
-      @env['rack.request.form_hash'] = form_hash
-
+      convert! if @env['HTTP_X_RAW_UPLOAD'] == 'true'
       @app.call(@env)
     end
-    
-    def input
-      @env['rack.input']
-    end
 
+    def convert!
+      @env['rack.request.form_hash'] = form_hash
+      @env['rack.request.form_input'] = @env['rack.input']
+    end
+    
     def form_hash
       result = other_params
 
